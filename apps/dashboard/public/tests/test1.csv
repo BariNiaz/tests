@@ -1,0 +1,3 @@
+id,question,optionA,optionB,optionC,optionD,correct
+1,Что является языками программирования?,JavaScript,HTML,Python,CSS,A|C
+2,Что такое React?,Библиотека,Сервер,ОС,Браузер,A
