@@ -24,8 +24,10 @@ function App() {
         />
 
         <Route
-          path="/test"
-          element={user ? <TestPage /> : <Navigate to="/" />}
+          path="/test/:id"
+          element={
+            user ? <TestPage /> : <Navigate to="/" />
+          }
         />
 
         <Route
