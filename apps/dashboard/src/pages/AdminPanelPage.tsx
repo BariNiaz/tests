@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Card,
   CardContent,
@@ -14,22 +15,59 @@ import { useEffect, useState } from "react";
 
 import {
   assignTests,
+  createTest,
+  createUser,
   getCategories,
+  getResults,
   getUsers,
-  saveTests
+  resetAttempt
 } from "../services/api";
+
+const difficultyLabels: Record<string, string> = {
+  junior: "Junior",
+  middle: "Middle",
+  senior: "Senior",
+  lead: "Lead"
+};
+
+const defaultQuestionsJson = JSON.stringify(
+  [
+    {
+      id: 1,
+      text: "Вопрос 1",
+      options: ["Ответ A", "Ответ B", "Ответ C", "Ответ D"],
+      correct: [0]
+    }
+  ],
+  null,
+  2
+);
 
 export default function AdminPanelPage() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const [users, setUsers] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [results, setResults] = useState<any[]>([]);
 
   const [selectedUser, setSelectedUser] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
 
   const [questionsLimit, setQuestionsLimit] = useState("1");
   const [timeLimit, setTimeLimit] = useState("60");
+
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState("worker");
+
+  const [testTitle, setTestTitle] = useState("");
+  const [testDescription, setTestDescription] = useState("");
+  const [testDifficulty, setTestDifficulty] = useState("junior");
+  const [testQuestions, setTestQuestions] = useState(defaultQuestionsJson);
+
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -38,101 +76,112 @@ export default function AdminPanelPage() {
   async function loadData() {
     const usersData = await getUsers();
     const categoriesData = await getCategories();
+    const resultsData = await getResults();
 
     setUsers(usersData);
     setCategories(categoriesData);
+    setResults(resultsData);
   }
 
-  function parseCsv(text: string) {
-    const rows = text
-      .split("\n")
-      .map((row) => row.trim())
-      .filter(Boolean);
-
-    const testsMap: any = {};
-
-    rows.slice(1).forEach((row, index) => {
-      const [
-        category,
-        questionText,
-        optionsText,
-        correctText,
-        type
-      ] = row.split(";");
-
-      if (!category || !questionText || !optionsText || !correctText) {
-        return;
-      }
-
-      if (!testsMap[category]) {
-        testsMap[category] = {
-          id: Object.keys(testsMap).length + 1,
-          title: category,
-          description: `Категория: ${category}`,
-          questions: []
-        };
-      }
-
-      testsMap[category].questions.push({
-        id: index + 1,
-        text: questionText,
-        type: type || "single",
-        options: optionsText.split("|"),
-        correct: correctText.split(",").map(Number)
-      });
-    });
-
-    return Object.values(testsMap);
+  function showMessage(text: string) {
+    setError("");
+    setMessage(text);
   }
 
-  async function uploadCsv(event: any) {
-    const file = event.target.files[0];
-
-    if (!file) {
-      return;
-    }
-
-    const text = await file.text();
-    const parsedTests = parseCsv(text);
-
-    await saveTests(parsedTests);
-    await loadData();
-
-    alert("CSV файл загружен");
+  function showError(text: string) {
+    setMessage("");
+    setError(text);
   }
 
   function toggleCategory(categoryId: number) {
     if (selectedCategories.includes(categoryId)) {
-      setSelectedCategories(
-        selectedCategories.filter((id) => id !== categoryId)
-      );
+      setSelectedCategories(selectedCategories.filter((id) => id !== categoryId));
     } else {
-      setSelectedCategories([
-        ...selectedCategories,
-        categoryId
-      ]);
+      setSelectedCategories([...selectedCategories, categoryId]);
+    }
+  }
+
+  async function addUser() {
+    try {
+      await createUser({
+        full_name: newUserName,
+        email: newUserEmail,
+        password: newUserPassword,
+        role: newUserRole
+      });
+
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserRole("worker");
+      await loadData();
+      showMessage("Пользователь добавлен в server/data/users.json");
+    } catch (err: any) {
+      showError(err.message);
+    }
+  }
+
+  async function addTest() {
+    try {
+      const questions = JSON.parse(testQuestions);
+
+      if (!Array.isArray(questions)) {
+        showError("Вопросы должны быть массивом JSON");
+        return;
+      }
+
+      await createTest({
+        title: testTitle,
+        description: testDescription,
+        difficulty: testDifficulty,
+        questions
+      });
+
+      setTestTitle("");
+      setTestDescription("");
+      setTestDifficulty("junior");
+      setTestQuestions(defaultQuestionsJson);
+      await loadData();
+      showMessage("Тест добавлен в server/data/questions.json");
+    } catch (err: any) {
+      showError(err.message);
     }
   }
 
   async function assign() {
     if (!selectedUser) {
-      alert("Выберите пользователя");
+      showError("Выберите пользователя");
       return;
     }
 
     if (selectedCategories.length === 0) {
-      alert("Выберите хотя бы одну категорию");
+      showError("Выберите хотя бы один тест");
       return;
     }
 
-    await assignTests({
-      userId: selectedUser,
-      testIds: selectedCategories,
-      questionsLimit,
-      timeLimit
-    });
+    try {
+      await assignTests({
+        userId: selectedUser,
+        testIds: selectedCategories,
+        questionsLimit,
+        timeLimit
+      });
 
-    alert("Категории назначены пользователю");
+      await loadData();
+      showMessage("Тесты назначены пользователю");
+    } catch (err: any) {
+      showError(err.message);
+    }
+  }
+
+  async function reset(userId: number, testId: number) {
+    try {
+      await resetAttempt(userId, testId);
+      await loadData();
+      showMessage("Попытка сброшена. Пользователь может пройти тест заново.");
+    } catch (err: any) {
+      showError(err.message);
+    }
   }
 
   if (user.role !== "admin") {
@@ -142,113 +191,126 @@ export default function AdminPanelPage() {
   return (
     <Container sx={{ mt: 4 }}>
       <Typography variant="h4">Админ панель</Typography>
-      <Typography>Здесь будут пользователи и тесты</Typography>
+      <Typography>
+        Пользователи, тесты, назначения и результаты хранятся в JSON-файлах в server/data.
+      </Typography>
+
+      {message && <Alert severity="success" sx={{ mt: 2 }}>{message}</Alert>}
+      {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
 
       <Card sx={{ mt: 3 }}>
         <CardContent>
-          <Typography variant="h6">
-            1. Загрузить CSV файл с вопросами
+          <Typography variant="h6">1. Добавить пользователя в базу</Typography>
+          <Typography sx={{ mt: 1 }}>
+            Регистрации на сайте нет, поэтому новых пользователей добавляет администратор.
           </Typography>
 
-          <Button
-            variant="contained"
-            component="label"
-            sx={{ mt: 2 }}
-          >
-            Выбрать CSV файл
-            <input
-              hidden
-              type="file"
-              accept=".csv"
-              onChange={uploadCsv}
-            />
+          <TextField fullWidth label="ФИО" sx={{ mt: 2 }} value={newUserName} onChange={(e) => setNewUserName(e.target.value)} />
+          <TextField fullWidth label="Email" sx={{ mt: 2 }} value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
+          <TextField fullWidth label="Пароль" type="password" sx={{ mt: 2 }} value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} />
+          <TextField select fullWidth label="Роль" sx={{ mt: 2 }} value={newUserRole} onChange={(e) => setNewUserRole(e.target.value)}>
+            <MenuItem value="worker">Пользователь</MenuItem>
+            <MenuItem value="admin">Администратор</MenuItem>
+          </TextField>
+
+          <Button variant="contained" sx={{ mt: 2 }} onClick={addUser}>
+            Добавить пользователя
           </Button>
-
-          <Typography sx={{ mt: 2 }}>
-            Формат CSV:
-          </Typography>
-
-          <Typography>
-            категория;вопрос;варианты;правильный;тип
-          </Typography>
-
-          <Typography>
-            Охрана труда;Нужна ли каска?;Да|Нет;0;single
-          </Typography>
         </CardContent>
       </Card>
 
       <Card sx={{ mt: 3 }}>
         <CardContent>
-          <Typography variant="h6">
-            2. Назначить категории пользователю
+          <Typography variant="h6">2. Добавить тест</Typography>
+          <Typography sx={{ mt: 1 }}>
+            Загрузки файла через интерфейс нет. После добавления тест сохраняется в server/data/questions.json.
+          </Typography>
+          <Typography sx={{ mt: 1 }}>
+            Формат вопроса: text, options, correct. В correct указываются индексы правильных ответов, начиная с 0.
           </Typography>
 
+          <TextField fullWidth label="Название теста" sx={{ mt: 2 }} value={testTitle} onChange={(e) => setTestTitle(e.target.value)} />
+          <TextField fullWidth label="Описание" sx={{ mt: 2 }} value={testDescription} onChange={(e) => setTestDescription(e.target.value)} />
+          <TextField select fullWidth label="Уровень сложности" sx={{ mt: 2 }} value={testDifficulty} onChange={(e) => setTestDifficulty(e.target.value)}>
+            <MenuItem value="junior">Junior</MenuItem>
+            <MenuItem value="middle">Middle</MenuItem>
+            <MenuItem value="senior">Senior</MenuItem>
+            <MenuItem value="lead">Lead</MenuItem>
+          </TextField>
           <TextField
-            select
             fullWidth
-            label="Пользователь"
+            multiline
+            minRows={8}
+            label="Вопросы в JSON"
             sx={{ mt: 2 }}
-            value={selectedUser}
-            onChange={(e) => setSelectedUser(e.target.value)}
-          >
-            {users
-              .filter((currentUser) => currentUser.role === "worker")
-              .map((currentUser) => (
-                <MenuItem key={currentUser.id} value={currentUser.id}>
-                  {currentUser.full_name} — {currentUser.email}
-                </MenuItem>
-              ))}
+            value={testQuestions}
+            onChange={(e) => setTestQuestions(e.target.value)}
+          />
+
+          <Button variant="contained" sx={{ mt: 2 }} onClick={addTest}>
+            Добавить тест
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6">3. Назначить тест пользователю</Typography>
+
+          <TextField select fullWidth label="Пользователь" sx={{ mt: 2 }} value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)}>
+            {users.filter((currentUser) => currentUser.role === "worker").map((currentUser) => (
+              <MenuItem key={currentUser.id} value={currentUser.id}>
+                {currentUser.full_name} — {currentUser.email}
+              </MenuItem>
+            ))}
           </TextField>
 
-          <Typography sx={{ mt: 2 }}>
-            Категории:
-          </Typography>
+          <Typography sx={{ mt: 2 }}>Тесты:</Typography>
 
-          {categories.length === 0 && (
-            <Typography sx={{ mt: 1 }}>
-              Сначала загрузите CSV файл.
-            </Typography>
-          )}
+          {categories.length === 0 && <Typography sx={{ mt: 1 }}>В server/data/questions.json пока нет тестов.</Typography>}
 
           {categories.map((category) => (
-            <FormControlLabel
-              key={category.id}
-              control={
-                <Checkbox
-                  checked={selectedCategories.includes(category.id)}
-                  onChange={() => toggleCategory(category.id)}
-                />
-              }
-              label={`${category.title} — вопросов: ${category.questionsCount}`}
-            />
+            <div key={category.id}>
+              <FormControlLabel
+                control={<Checkbox checked={selectedCategories.includes(category.id)} onChange={() => toggleCategory(category.id)} />}
+                label={`${category.title} — ${difficultyLabels[category.difficulty] || category.difficulty} — вопросов: ${category.questionsCount}`}
+              />
+            </div>
           ))}
 
-          <TextField
-            fullWidth
-            type="number"
-            label="Сколько вопросов дать пользователю"
-            sx={{ mt: 2 }}
-            value={questionsLimit}
-            onChange={(e) => setQuestionsLimit(e.target.value)}
-          />
+          <TextField fullWidth type="number" label="Сколько вопросов дать пользователю" sx={{ mt: 2 }} value={questionsLimit} onChange={(e) => setQuestionsLimit(e.target.value)} />
+          <TextField fullWidth type="number" label="Время на тест в секундах" sx={{ mt: 2 }} value={timeLimit} onChange={(e) => setTimeLimit(e.target.value)} />
 
-          <TextField
-            fullWidth
-            type="number"
-            label="Время на тест в секундах"
-            sx={{ mt: 2 }}
-            value={timeLimit}
-            onChange={(e) => setTimeLimit(e.target.value)}
-          />
-
-          <Button
-            variant="contained"
-            sx={{ mt: 2 }}
-            onClick={assign}
-          >
+          <Button variant="contained" sx={{ mt: 2 }} onClick={assign}>
             Назначить
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card sx={{ mt: 3, mb: 4 }}>
+        <CardContent>
+          <Typography variant="h6">4. Результаты и сброс попыток</Typography>
+
+          {results.length === 0 && <Typography sx={{ mt: 1 }}>Пока нет прохождений.</Typography>}
+
+          {results.map((result) => (
+            <Card key={result.id} variant="outlined" sx={{ mt: 2 }}>
+              <CardContent>
+                <Typography>
+                  {result.userName} — {result.testTitle} — {result.score}/{result.total}
+                </Typography>
+                <Typography>
+                  Уровень: {difficultyLabels[result.difficulty] || result.difficulty}
+                </Typography>
+                <Typography>
+                  Дата: {new Date(result.completedAt).toLocaleString()}
+                </Typography>
+                <Button variant="outlined" sx={{ mt: 1 }} onClick={() => reset(result.userId, result.testId)}>
+                  Сбросить прохождение
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </CardContent>
       </Card>
     </Container>

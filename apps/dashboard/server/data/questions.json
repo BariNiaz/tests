@@ -1,0 +1,61 @@
+[
+  {
+    "id": 1,
+    "title": "тест",
+    "description": "проверка",
+    "difficulty": "junior",
+    "questions": [
+      {
+        "id": 1,
+        "text": "Что является языками программирования?",
+        "type": "multiple",
+        "options": [
+          "JavaScript",
+          "HTML",
+          "Python",
+          "CSS"
+        ],
+        "correct": [
+          0,
+          2
+        ]
+      },
+      {
+        "id": 2,
+        "text": "Что такое React?",
+        "type": "single",
+        "options": [
+          "Библиотека",
+          "Сервер",
+          "ОС",
+          "Браузер"
+        ],
+        "correct": [
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "id": 1783355972462,
+    "title": "аптапытча",
+    "description": "чаптчатчат",
+    "difficulty": "junior",
+    "questions": [
+      {
+        "id": 1,
+        "text": "Вопраптчпатчаос 1",
+        "type": "single",
+        "options": [
+          "Ответ A",
+          "Ответ B",
+          "Ответ C",
+          "Ответ D"
+        ],
+        "correct": [
+          0
+        ]
+      }
+    ]
+  }
+]

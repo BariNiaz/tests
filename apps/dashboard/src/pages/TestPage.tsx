@@ -1,4 +1,5 @@
 import {
+  Alert,
   Container,
   Typography,
   Radio,
@@ -10,17 +11,19 @@ import {
 
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { saveResult } from "../services/api";
 
 export default function TestPage() {
   const location = useLocation();
   const navigate = useNavigate();
-
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
   const test = location.state;
 
   const [answers, setAnswers] = useState<any>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(test?.timeLimit || 60);
   const [isFinished, setIsFinished] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -34,38 +37,33 @@ export default function TestPage() {
     if (timeLeft <= 0 && !isFinished) {
       submit();
     }
-  }, [timeLeft]);
+  }, [timeLeft, isFinished]);
 
   if (!test) {
     return <Typography>Тест не найден</Typography>;
   }
 
+  if (test.completed) {
+    return <Typography>Тест уже пройден. Обратитесь к администратору для сброса попытки.</Typography>;
+  }
+
   const question = test.questions[currentQuestionIndex];
 
   function saveSingleAnswer(value: string) {
-    setAnswers({
-      ...answers,
-      [question.id]: value
-    });
+    setAnswers({ ...answers, [question.id]: value });
   }
 
   function saveMultipleAnswer(index: number, checked: boolean) {
     const current = answers[question.id] || [];
-
     let updated = [...current];
 
     if (checked) {
       updated.push(index);
     } else {
-      updated = updated.filter(
-        (x: number) => x !== index
-      );
+      updated = updated.filter((x: number) => x !== index);
     }
 
-    setAnswers({
-      ...answers,
-      [question.id]: updated
-    });
+    setAnswers({ ...answers, [question.id]: updated });
   }
 
   function nextQuestion() {
@@ -76,118 +74,62 @@ export default function TestPage() {
     }
   }
 
-  const submit = () => {
+  async function submit() {
     if (isFinished) {
       return;
     }
 
     setIsFinished(true);
 
-    let score = 0;
+    try {
+      const result = await saveResult({
+        userId: user.id,
+        testId: test.id,
+        answers
+      });
 
-    test.questions.forEach((question: any) => {
-      const userAnswer = answers[question.id];
-
-      if (question.type === "single") {
-        if (
-          Number(userAnswer) ===
-          question.correct[0]
-        ) {
-          score++;
-        }
-      }
-
-      if (question.type === "multiple") {
-        const sortedUser =
-          [...(userAnswer || [])].sort();
-
-        const sortedCorrect =
-          [...question.correct].sort();
-
-        if (
-          JSON.stringify(sortedUser) ===
-          JSON.stringify(sortedCorrect)
-        ) {
-          score++;
-        }
-      }
-    });
-
-    alert(
-      `Результат: ${score}/${test.questions.length}`
-    );
-
-    navigate("/dashboard");
-  };
+      alert(`Результат: ${result.score}/${result.total}`);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message);
+      setIsFinished(false);
+    }
+  }
 
   return (
     <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        {test.title}
-      </Typography>
-
-      <Typography sx={{ mt: 2 }}>
-        Осталось времени: {timeLeft} секунд
-      </Typography>
-
-      <Typography sx={{ mt: 2 }}>
-        Вопрос {currentQuestionIndex + 1} из {test.questions.length}
-      </Typography>
+      <Typography variant="h4" gutterBottom>{test.title}</Typography>
+      {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+      <Typography sx={{ mt: 2 }}>Осталось времени: {Math.max(timeLeft, 0)} секунд</Typography>
+      <Typography sx={{ mt: 2 }}>Вопрос {currentQuestionIndex + 1} из {test.questions.length}</Typography>
 
       <div style={{ marginBottom: 30 }}>
-        <Typography variant="h6">
-          {question.text}
-        </Typography>
+        <Typography variant="h6">{question.text}</Typography>
 
         {question.type === "single" && (
-          <RadioGroup
-            value={answers[question.id] || ""}
-            onChange={(e) =>
-              saveSingleAnswer(e.target.value)
-            }
-          >
-            {question.options.map(
-              (option: string, index: number) => (
-                <FormControlLabel
-                  key={index}
-                  value={String(index)}
-                  control={<Radio />}
-                  label={option}
-                />
-              )
-            )}
+          <RadioGroup value={answers[question.id] || ""} onChange={(e) => saveSingleAnswer(e.target.value)}>
+            {question.options.map((option: string, index: number) => (
+              <FormControlLabel key={index} value={String(index)} control={<Radio />} label={option} />
+            ))}
           </RadioGroup>
         )}
 
-        {question.type === "multiple" &&
-          question.options.map(
-            (option: string, index: number) => (
-              <FormControlLabel
-                key={index}
-                control={
-                  <Checkbox
-                    checked={(answers[question.id] || []).includes(index)}
-                    onChange={(e) =>
-                      saveMultipleAnswer(
-                        index,
-                        e.target.checked
-                      )
-                    }
-                  />
-                }
-                label={option}
+        {question.type === "multiple" && question.options.map((option: string, index: number) => (
+          <FormControlLabel
+            key={index}
+            control={
+              <Checkbox
+                checked={(answers[question.id] || []).includes(index)}
+                onChange={(e) => saveMultipleAnswer(index, e.target.checked)}
               />
-            )
-          )}
+            }
+            label={option}
+          />
+        ))}
       </div>
 
-      <Button
-        variant="contained"
-        onClick={nextQuestion}
-      >
-        {currentQuestionIndex === test.questions.length - 1
-          ? "Завершить тест"
-          : "Следующий вопрос"}
+      <Button variant="contained" onClick={nextQuestion} disabled={isFinished}>
+        {currentQuestionIndex === test.questions.length - 1 ? "Завершить тест" : "Следующий вопрос"}
       </Button>
     </Container>
   );

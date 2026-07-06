@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "full_name": "Администратор",
+    "email": "admin@test.com",
+    "password_hash": "admin",
+    "role": "admin"
+  },
+  {
+    "id": 2,
+    "full_name": "Тестируемый",
+    "email": "worker@test.com",
+    "password_hash": "test1",
+    "role": "worker"
+  },
+  {
+    "id": 3,
+    "full_name": "Тестируемый 2",
+    "email": "worker2@test.com",
+    "password_hash": "test2",
+    "role": "worker"
+  }
+]
