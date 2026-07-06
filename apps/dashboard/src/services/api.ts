@@ -1,56 +1,78 @@
 const API_URL = "http://localhost:3001";
 
-export async function registerUser(data: any) {
-  const res = await fetch(`${API_URL}/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+async function request(url: string, options?: RequestInit) {
+  const res = await fetch(`${API_URL}${url}`, options);
+  const data = await res.json();
 
-  return res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Ошибка сервера");
+  }
+
+  return data;
 }
 
 export async function loginUser(data: any) {
-  const res = await fetch(`${API_URL}/login`, {
+  return request("/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   });
-
-  return res.json();
 }
 
 export async function getUsers() {
-  const res = await fetch(`${API_URL}/users`);
-  return res.json();
+  return request("/users");
 }
 
-export async function saveTests(tests: any[]) {
-  const res = await fetch(`${API_URL}/tests`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tests })
-  });
-
-  return res.json();
-}
-
-export async function getCategories() {
-  const res = await fetch(`${API_URL}/categories`);
-  return res.json();
-}
-
-export async function assignTests(data: any) {
-  const res = await fetch(`${API_URL}/assignments`, {
+export async function createUser(data: any) {
+  return request("/users", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   });
+}
 
-  return res.json();
+export async function createTest(data: any) {
+  return request("/tests", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+}
+
+export async function getCategories() {
+  return request("/categories");
+}
+
+export async function assignTests(data: any) {
+  return request("/assignments", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
 }
 
 export async function getUserTests(userId: number) {
-  const res = await fetch(`${API_URL}/tests/user/${userId}`);
-  return res.json();
+  return request(`/tests/user/${userId}`);
+}
+
+export async function getTest(testId: number) {
+  return request(`/tests/${testId}`);
+}
+
+export async function saveResult(data: any) {
+  return request("/results", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+}
+
+export async function getResults() {
+  return request("/results");
+}
+
+export async function resetAttempt(userId: number, testId: number) {
+  return request(`/results/${userId}/${testId}`, {
+    method: "DELETE"
+  });
 }
