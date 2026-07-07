@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "id": 1783362601048,
+    "userId": 2,
+    "testId": 1783355972462,
+    "testTitle": "аптапытча",
+    "difficulty": "junior",
+    "answers": {
+      "1": "0"
+    },
+    "score": 1,
+    "total": 1,
+    "completedAt": "2026-07-06T18:30:01.048Z"
+  }
+]

@@ -68,7 +68,13 @@ export async function saveResult(data: any) {
 }
 
 export async function getResults() {
-  return request("/results");
+  const res = await fetch("http://localhost:3001/results");
+
+  if (!res.ok) {
+    throw new Error("Не удалось загрузить результаты");
+  }
+
+  return await res.json();
 }
 
 export async function resetAttempt(userId: number, testId: number) {
