@@ -57,5 +57,27 @@
         ]
       }
     ]
+  },
+  {
+    "id": 1783594409906,
+    "title": "Тест мидл",
+    "description": "Описание тест мидл",
+    "difficulty": "middle",
+    "questions": [
+      {
+        "id": 1,
+        "text": "Вопрос 1",
+        "type": "single",
+        "options": [
+          "Ответ A",
+          "Ответ B",
+          "Ответ C",
+          "Ответ D"
+        ],
+        "correct": [
+          1
+        ]
+      }
+    ]
   }
 ]

@@ -93,6 +93,13 @@ function normalizeDifficulty(difficulty) {
   return allowed.includes(difficulty) ? difficulty : "junior";
 }
 
+const difficultyLevels = {
+  junior: 1,
+  middle: 2,
+  senior: 3,
+  lead: 4
+};
+
 function normalizeQuestion(question, index) {
   const correct = Array.isArray(question.correct)
     ? question.correct.map(Number).filter(item => !Number.isNaN(item))
@@ -306,6 +313,9 @@ app.post("/results", (req, res) => {
   }
 
   const test = getTests().find(currentTest => Number(currentTest.id) === numericTestId);
+  const currentUser = getUsers().find(
+    user => Number(user.id) === numericUserId
+  );
 
   if (!test) {
     return res.status(404).json({ error: "Тест не найден" });
@@ -333,13 +343,22 @@ app.post("/results", (req, res) => {
 
   const result = {
     id: Date.now(),
+
     userId: numericUserId,
+    full_name: currentUser?.full_name || "",
+    email: currentUser?.email || "",
+
     testId: numericTestId,
     testTitle: test.title,
+
     difficulty: test.difficulty,
+    difficultyLevel: difficultyLevels[test.difficulty] || 1,
+    
     answers: answers || {},
+
     score,
     total: questions.length,
+
     completedAt: new Date().toISOString()
   };
 
