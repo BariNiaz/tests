@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage";
 import TestPage from "./pages/TestPage";
 import ResultsPage from "./pages/ResultsPage";
 import AdminPanelPage from "./pages/AdminPanelPage";
+import AccessLinkPage from "./pages/AccessLinkPage";
 
 import { NavigationBar } from "./components/navigation_bar";
 
@@ -23,12 +24,9 @@ function App() {
           element={user ? <DashboardPage /> : <Navigate to="/" />}
         />
 
-        <Route
-          path="/test/:id"
-          element={
-            user ? <TestPage /> : <Navigate to="/" />
-          }
-        />
+        <Route path="/access/:token" element={<AccessLinkPage />} />
+
+        <Route path="/test/:id" element={<TestPage />} />
 
         <Route
           path="/results"

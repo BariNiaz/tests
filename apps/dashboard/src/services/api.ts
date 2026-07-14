@@ -51,6 +51,10 @@ export async function assignTests(data: any) {
   });
 }
 
+export async function resolveAccessLink(token: string) {
+  return request(`/access/${token}`);
+}
+
 export async function getUserTests(userId: number) {
   return request(`/tests/user/${userId}`);
 }
