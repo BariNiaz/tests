@@ -16,8 +16,9 @@ import { saveResult } from "../services/api";
 export default function TestPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(localStorage.getItem("user") || "null");
   const test = location.state;
+  const accessToken = test?.accessToken;
 
   const [answers, setAnswers] = useState<any>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -83,13 +84,16 @@ export default function TestPage() {
 
     try {
       const result = await saveResult({
-        userId: user.id,
-        testId: test.id,
+        ...(accessToken ? { accessToken } : { userId: user?.id, testId: test.id }),
         answers
       });
 
       alert(`Результат: ${result.score}/${result.total}`);
-      navigate("/dashboard");
+      if (user) {
+        navigate("/dashboard");
+      } else {
+        navigate(`/access/${accessToken}`, { replace: true });
+      }
     } catch (err: any) {
       setError(err.message);
       setIsFinished(false);

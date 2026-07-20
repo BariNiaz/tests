@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const app = express();
 app.use(cors());
@@ -127,7 +128,9 @@ function normalizeTest(test) {
     id: Number(test.id) || Date.now(),
     title: String(test.title || "").trim(),
     description: String(test.description || "").trim(),
+    category: String(test.category || "Общая").trim() || "Общая",
     difficulty: normalizeDifficulty(test.difficulty),
+    timeLimit: Math.max(1, Number(test.timeLimit) || 60),
     questions
   };
 }
@@ -185,7 +188,9 @@ app.get("/categories", (req, res) => {
     id: test.id,
     title: test.title,
     description: test.description,
+    category: test.category || "Общая",
     difficulty: test.difficulty,
+    timeLimit: Number(test.timeLimit) || 60,
     questionsCount: Array.isArray(test.questions) ? test.questions.length : 0
   }));
 
@@ -222,38 +227,68 @@ app.get("/tests/:testId", (req, res) => {
 });
 
 app.post("/assignments", (req, res) => {
-  const { userId, testIds, questionsLimit, timeLimit } = req.body;
+  const { userId, testIds } = req.body;
 
-  if (!userId || !Array.isArray(testIds)) {
-    return res.status(400).json({ error: "Нужно передать userId и массив testIds" });
+  if (!userId || !Array.isArray(testIds) || !testIds.length) {
+    return res.status(400).json({ error: "Нужно выбрать пользователя и тесты" });
   }
 
   const assignments = getAssignments();
+  const tests = getTests();
+  const links = [];
 
   testIds.forEach(testId => {
-    const existing = assignments.find(
-      assignment =>
-        Number(assignment.userId) === Number(userId) &&
-        Number(assignment.testId) === Number(testId)
+    let assignment = assignments.find(item =>
+      Number(item.userId) === Number(userId) && Number(item.testId) === Number(testId)
     );
 
-    if (existing) {
-      existing.questionsLimit = Number(questionsLimit);
-      existing.timeLimit = Number(timeLimit);
-      return;
+    if (!assignment) {
+      assignment = {
+        id: Date.now() + Math.random(),
+        userId: Number(userId),
+        testId: Number(testId),
+        token: crypto.randomBytes(18).toString("hex")
+      };
+      assignments.push(assignment);
+    } else if (!assignment.token) {
+      assignment.token = crypto.randomBytes(18).toString("hex");
     }
 
-    assignments.push({
-      id: Date.now() + Math.random(),
-      userId: Number(userId),
+    const test = tests.find(item => Number(item.id) === Number(testId));
+    links.push({
+      token: assignment.token,
       testId: Number(testId),
-      questionsLimit: Number(questionsLimit) || 0,
-      timeLimit: Number(timeLimit) || 60
+      testTitle: test?.title || "Тест",
+      url: `${req.protocol}://${req.get("host").replace(":3001", ":5173")}/access/${assignment.token}`
     });
   });
 
   saveAssignments(assignments);
-  res.json({ message: "Тесты назначены" });
+  res.json({ message: "Тесты назначены", links });
+});
+
+app.get("/access/:token", (req, res) => {
+  const assignment = getAssignments().find(item => item.token === req.params.token);
+
+  if (!assignment) return res.status(404).json({ error: "Ссылка недействительна" });
+
+  const test = getTests().find(item => Number(item.id) === Number(assignment.testId));
+  if (!test) return res.status(404).json({ error: "Тест не найден" });
+
+  const attempt = getResults().find(
+    item => Number(item.userId) === Number(assignment.userId) && Number(item.testId) === Number(test.id)
+  );
+
+  res.json({
+    ...test,
+    questions: test.questions || [],
+    timeLimit: Number(test.timeLimit) || 60,
+    accessToken: assignment.token,
+    completed: Boolean(attempt),
+    score: attempt?.score,
+    total: attempt?.total,
+    completedAt: attempt?.completedAt
+  });
 });
 
 app.get("/tests/user/:userId", (req, res) => {
@@ -277,8 +312,8 @@ app.get("/tests/user/:userId", (req, res) => {
 
       return {
         ...test,
-        questions: questions.slice(0, assignment.questionsLimit || questions.length),
-        timeLimit: assignment.timeLimit,
+        questions,
+        timeLimit: Number(test.timeLimit) || 60,
         completed: Boolean(attempt),
         score: attempt?.score,
         total: attempt?.total,
@@ -291,11 +326,33 @@ app.get("/tests/user/:userId", (req, res) => {
 });
 
 app.post("/results", (req, res) => {
-  const { userId, testId, answers } = req.body;
-  const numericUserId = Number(userId);
-  const numericTestId = Number(testId);
-  const results = getResults();
+  const { userId, testId, answers, accessToken } = req.body;
+  const assignments = getAssignments();
 
+  let numericUserId = Number(userId);
+  let numericTestId = Number(testId);
+  let assignment;
+
+  if (accessToken) {
+    assignment = assignments.find(item => item.token === String(accessToken));
+
+    if (!assignment) {
+      return res.status(403).json({ error: "Ссылка недействительна" });
+    }
+
+    numericUserId = Number(assignment.userId);
+    numericTestId = Number(assignment.testId);
+  } else {
+    assignment = assignments.find(
+      item => Number(item.userId) === numericUserId && Number(item.testId) === numericTestId
+    );
+  }
+
+  if (!assignment) {
+    return res.status(403).json({ error: "Тест не назначен пользователю" });
+  }
+
+  const results = getResults();
   const alreadyPassed = results.find(
     result => Number(result.userId) === numericUserId && Number(result.testId) === numericTestId
   );
@@ -304,24 +361,14 @@ app.post("/results", (req, res) => {
     return res.status(403).json({ error: "Тест уже пройден. Доступна только одна попытка." });
   }
 
-  const assignment = getAssignments().find(
-    item => Number(item.userId) === numericUserId && Number(item.testId) === numericTestId
-  );
-
-  if (!assignment) {
-    return res.status(403).json({ error: "Тест не назначен пользователю" });
-  }
-
   const test = getTests().find(currentTest => Number(currentTest.id) === numericTestId);
-  const currentUser = getUsers().find(
-    user => Number(user.id) === numericUserId
-  );
+  const currentUser = getUsers().find(user => Number(user.id) === numericUserId);
 
   if (!test) {
     return res.status(404).json({ error: "Тест не найден" });
   }
 
-  const questions = (test.questions || []).slice(0, assignment.questionsLimit || test.questions.length);
+  const questions = test.questions || [];
   let score = 0;
 
   questions.forEach(question => {
@@ -343,22 +390,16 @@ app.post("/results", (req, res) => {
 
   const result = {
     id: Date.now(),
-
     userId: numericUserId,
     full_name: currentUser?.full_name || "",
     email: currentUser?.email || "",
-
     testId: numericTestId,
     testTitle: test.title,
-
     difficulty: test.difficulty,
     difficultyLevel: difficultyLevels[test.difficulty] || 1,
-    
     answers: answers || {},
-
     score,
     total: questions.length,
-
     completedAt: new Date().toISOString()
   };
 
