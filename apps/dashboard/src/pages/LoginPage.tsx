@@ -19,7 +19,13 @@ export default function LoginPage() {
       setError("");
       const res = await loginUser({ email, password });
       localStorage.setItem("user", JSON.stringify(res));
-      window.location.href = "/dashboard";
+      const pendingToken = localStorage.getItem("pendingAccessToken");
+      if (pendingToken) {
+        localStorage.removeItem("pendingAccessToken");
+        window.location.href = `/access/${pendingToken}`;
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch (err: any) {
       setError(err.message);
     }

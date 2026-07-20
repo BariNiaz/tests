@@ -87,5 +87,23 @@
     "score": 1,
     "total": 1,
     "completedAt": "2026-07-09T11:48:26.660Z"
+  },
+  {
+    "id": 1784033395236,
+    "userId": 2,
+    "full_name": "Тестируемый",
+    "email": "worker@test.com",
+    "testId": 1784028706249,
+    "testTitle": "что-то",
+    "difficulty": "junior",
+    "difficultyLevel": 1,
+    "answers": {
+      "1": [
+        2
+      ]
+    },
+    "score": 0,
+    "total": 1,
+    "completedAt": "2026-07-14T12:49:55.236Z"
   }
 ]

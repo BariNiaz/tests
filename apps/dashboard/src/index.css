@@ -1,0 +1,7 @@
+
+.json-editor { position: relative; min-height: 320px; overflow: hidden; border: 1px solid #bdbdbd; border-radius: 4px; background: #111827; }
+.json-editor pre, .json-editor textarea { box-sizing: border-box; margin: 0; padding: 16px; width: 100%; min-height: 320px; border: 0; font: 14px/1.5 Consolas, Monaco, monospace; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; }
+.json-editor pre { color: #e5e7eb; pointer-events: none; }
+.json-editor textarea { position: absolute; inset: 0; resize: vertical; background: transparent; color: transparent; caret-color: white; outline: none; -webkit-text-fill-color: transparent; }
+.json-editor textarea::selection { background: rgba(59,130,246,.45); }
+.json-key { color: #93c5fd; } .json-string { color: #86efac; } .json-number { color: #fca5a5; } .json-literal { color: #c4b5fd; }

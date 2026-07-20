@@ -34,7 +34,9 @@
           0
         ]
       }
-    ]
+    ],
+    "category": "Общая",
+    "timeLimit": 60
   },
   {
     "id": 1783355972462,
@@ -56,7 +58,9 @@
           0
         ]
       }
-    ]
+    ],
+    "category": "Общая",
+    "timeLimit": 60
   },
   {
     "id": 1783594409906,
@@ -76,6 +80,33 @@
         ],
         "correct": [
           1
+        ]
+      }
+    ],
+    "category": "Общая",
+    "timeLimit": 60
+  },
+  {
+    "id": 1784028706249,
+    "title": "что-то",
+    "description": "бт рл л",
+    "category": "Про",
+    "difficulty": "junior",
+    "timeLimit": 90,
+    "questions": [
+      {
+        "id": 1,
+        "text": "Вопрос 1",
+        "type": "multiple",
+        "options": [
+          "Ответ A",
+          "Ответ B",
+          "Отвеоилрмлрт C",
+          "Ответ D"
+        ],
+        "correct": [
+          0,
+          6
         ]
       }
     ]
