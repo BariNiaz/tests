@@ -326,7 +326,7 @@ app.get("/tests/user/:userId", (req, res) => {
 });
 
 app.post("/results", (req, res) => {
-  const { userId, testId, answers, accessToken } = req.body;
+  const { userId, testId, answers, accessToken, durationSeconds } = req.body;
   const assignments = getAssignments();
 
   let numericUserId = Number(userId);
@@ -398,6 +398,7 @@ app.post("/results", (req, res) => {
     difficulty: test.difficulty,
     difficultyLevel: difficultyLevels[test.difficulty] || 1,
     answers: answers || {},
+    durationSeconds: Math.max(0, Math.min(Number(durationSeconds) || 0, (Number(test.timeLimit) || 60) + 5)),
     score,
     total: questions.length,
     completedAt: new Date().toISOString()

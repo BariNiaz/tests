@@ -20,6 +20,7 @@ export async function exportResults(rows: any[]) {
     { header: "Уровень", key: "difficulty", width: 15 },
     { header: "Баллы", key: "score", width: 15 },
     { header: "%", key: "percent", width: 10 },
+    { header: "Время", key: "duration", width: 12 },
     { header: "Дата", key: "completedAt", width: 25 }
   ];
 
@@ -31,6 +32,7 @@ export async function exportResults(rows: any[]) {
       difficulty: difficulty[row.difficultyLevel],
       score: `${row.score}/${row.total}`,
       percent: `${row.percent}%`,
+      duration: `${Math.floor((Number(row.durationSeconds) || 0) / 60)}:${String((Number(row.durationSeconds) || 0) % 60).padStart(2, "0")}`,
       completedAt: new Date(row.completedAt).toLocaleString("ru-RU")
     });
   });

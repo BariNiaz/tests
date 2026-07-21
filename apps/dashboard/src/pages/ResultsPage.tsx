@@ -240,6 +240,17 @@ export default function ResultsPage() {
       }
     },
     {
+      field: "durationSeconds",
+      headerName: "Время",
+      width: 120,
+      valueFormatter: (value) => {
+        const totalSeconds = Math.max(0, Number(value) || 0);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${String(seconds).padStart(2, "0")}`;
+      }
+    },
+    {
       field: "completedAt",
       headerName: "Дата",
 

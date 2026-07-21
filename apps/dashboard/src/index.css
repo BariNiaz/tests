@@ -1,7 +1,32 @@
+.json-code-editor {
+  width: 100%;
+  min-height: 440px;
+  overflow: hidden;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background-color: #2d2d2d;
+}
 
-.json-editor { position: relative; min-height: 320px; overflow: hidden; border: 1px solid #bdbdbd; border-radius: 4px; background: #111827; }
-.json-editor pre, .json-editor textarea { box-sizing: border-box; margin: 0; padding: 16px; width: 100%; min-height: 320px; border: 0; font: 14px/1.5 Consolas, Monaco, monospace; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; }
-.json-editor pre { color: #e5e7eb; pointer-events: none; }
-.json-editor textarea { position: absolute; inset: 0; resize: vertical; background: transparent; color: transparent; caret-color: white; outline: none; -webkit-text-fill-color: transparent; }
-.json-editor textarea::selection { background: rgba(59,130,246,.45); }
-.json-key { color: #93c5fd; } .json-string { color: #86efac; } .json-number { color: #fca5a5; } .json-literal { color: #c4b5fd; }
+.json-code-editor textarea {
+  outline: none;
+  caret-color: #ffffff !important;
+}
+
+.json-code-editor textarea::selection {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.json-code-editor pre,
+.json-code-editor textarea {
+  margin: 0 !important;
+  font-family: Consolas, Monaco, "Courier New", monospace !important;
+  font-size: 15px !important;
+  line-height: 1.55 !important;
+  white-space: pre !important;
+  overflow-wrap: normal !important;
+  tab-size: 2;
+}
+
+.json-code-editor .json-code-highlight {
+  min-height: 440px;
+}

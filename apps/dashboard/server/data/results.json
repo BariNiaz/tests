@@ -1,41 +1,9 @@
 [
   {
-    "id": 1783597642076,
-    "userId": 2,
-    "full_name": "Тестируемый",
-    "email": "worker@test.com",
-    "testId": 1783355972462,
-    "testTitle": "аптапытча",
-    "difficulty": "junior",
-    "difficultyLevel": 1,
-    "answers": {
-      "1": "0"
-    },
-    "score": 1,
-    "total": 1,
-    "completedAt": "2026-07-09T11:47:22.076Z"
-  },
-  {
-    "id": 1783597646141,
-    "userId": 2,
-    "full_name": "Тестируемый",
-    "email": "worker@test.com",
-    "testId": 1783594409906,
-    "testTitle": "Тест мидл",
-    "difficulty": "middle",
-    "difficultyLevel": 2,
-    "answers": {
-      "1": "1"
-    },
-    "score": 1,
-    "total": 1,
-    "completedAt": "2026-07-09T11:47:26.141Z"
-  },
-  {
-    "id": 1783597651746,
-    "userId": 2,
-    "full_name": "Тестируемый",
-    "email": "worker@test.com",
+    "id": 1784637831452,
+    "userId": 3,
+    "full_name": "Тестируемый 2",
+    "email": "worker2@test.com",
     "testId": 1,
     "testTitle": "тест",
     "difficulty": "junior",
@@ -46,64 +14,9 @@
       ],
       "2": "1"
     },
+    "durationSeconds": 5,
     "score": 0,
     "total": 2,
-    "completedAt": "2026-07-09T11:47:31.746Z"
-  },
-  {
-    "id": 1783597697714,
-    "userId": 3,
-    "full_name": "Тестируемый 2",
-    "email": "worker2@test.com",
-    "testId": 1,
-    "testTitle": "тест",
-    "difficulty": "junior",
-    "difficultyLevel": 1,
-    "answers": {
-      "1": [
-        0,
-        1,
-        2,
-        3
-      ],
-      "2": "0"
-    },
-    "score": 1,
-    "total": 2,
-    "completedAt": "2026-07-09T11:48:17.714Z"
-  },
-  {
-    "id": 1783597706660,
-    "userId": 3,
-    "full_name": "Тестируемый 2",
-    "email": "worker2@test.com",
-    "testId": 1783594409906,
-    "testTitle": "Тест мидл",
-    "difficulty": "middle",
-    "difficultyLevel": 2,
-    "answers": {
-      "1": "1"
-    },
-    "score": 1,
-    "total": 1,
-    "completedAt": "2026-07-09T11:48:26.660Z"
-  },
-  {
-    "id": 1784033395236,
-    "userId": 2,
-    "full_name": "Тестируемый",
-    "email": "worker@test.com",
-    "testId": 1784028706249,
-    "testTitle": "что-то",
-    "difficulty": "junior",
-    "difficultyLevel": 1,
-    "answers": {
-      "1": [
-        2
-      ]
-    },
-    "score": 0,
-    "total": 1,
-    "completedAt": "2026-07-14T12:49:55.236Z"
+    "completedAt": "2026-07-21T12:43:51.452Z"
   }
 ]
